@@ -1,0 +1,12 @@
+[package]
+name = "er-extend-rs-text"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+er-extend-rs-config.workspace = true
+er-extend-rs-rva.workspace = true
+
+retour.workspace = true
+serde.workspace = true
+windows-sys.workspace = true

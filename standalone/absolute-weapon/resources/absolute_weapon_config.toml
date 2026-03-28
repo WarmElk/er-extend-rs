@@ -1,0 +1,39 @@
+# You should only really need to change any of this file if things are going wrong.
+
+# Set to true to log messages to the mod engine log when attempting to upgrade weapons.
+log_debug_messages = false
+
+# Set to true to show a debug overlay indicating what the current known upgrade level is, how many weapons have been upgraded this session, etc.
+# If setting this to true, an extra grace submenu option will appear that allows the debug window to be toggled.
+show_debug_window_overlay = false
+
+# Some overhaul mods (currently supports Reborn) may change the upgrade system, so auto-upgrading doesn't work correctly.
+# This will check certain values to make sure that you are running Reborn and only patch in-memory values when necessary.
+# Set this to false if things are breaking and you're not using Reborn.
+patch_weapon_reinforcements = true
+
+# NOTE: Probably don't change anything else below here. It's for convenience for future changes/mods.
+[extra_config]
+# Text that can add or override Event Text For Talk content.
+[extra_config.extra_text]
+event_text_for_talk = [
+    { text_id = 1061471000, text = "Absolute Weapon Tools" },
+    { text_id = 1061471001, text = "Upgrade all held weapons to max achieved so far" },
+    { text_id = 1061471002, text = "Show/hide upgrade stats" },
+]
+
+# Options and submenus to add to the grace menu
+[extra_config.extra_menu]
+# Base id for newly creates states and events so that they don't clash with existing ones.
+# Only change this if menu items aren't appearing, or you are having compatibility issues with other mods.
+base_state_and_event_id = 0xFFFF
+
+# Grace menu items and submenus
+[[extra_config.extra_menu.extra_menu_items]]
+# The text id from Event Text For Talk that will appear as the new option in the grace menu.
+menu_item_text_id = 1061471000
+# The options in the submenu (text_id from Event Text For Talk, flag_id used to trigger updates)
+sub_menu_item_config = [
+    { text_id = 1061471001, flag_id = 1061475001 },
+    { text_id = 1061471002, flag_id = 1061475002 },
+]

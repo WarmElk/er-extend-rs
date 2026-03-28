@@ -1,0 +1,11 @@
+[package]
+name = "er-extend-rs-rva"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+fromsoftware-shared.workspace = true
+pelite.workspace = true
+retour.workspace = true
+tracing.workspace = true
+

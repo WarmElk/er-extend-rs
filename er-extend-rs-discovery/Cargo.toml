@@ -1,0 +1,10 @@
+[package]
+name = "er-extend-rs-discovery"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+eldenring.workspace = true
+fromsoftware-shared.workspace = true

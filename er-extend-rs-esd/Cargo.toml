@@ -1,0 +1,15 @@
+[package]
+name = "er-extend-rs-esd"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+eldenring.workspace = true
+
+er-extend-rs-config.workspace = true
+er-extend-rs-rva.workspace = true
+er-extend-rs-text.workspace = true
+
+retour.workspace = true
+serde.workspace = true
+tracing.workspace = true
