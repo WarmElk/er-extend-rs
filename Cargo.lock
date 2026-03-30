@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "absolute-weapon"
-version = "0.1.0-alpha"
+version = "0.1.1-alpha"
 dependencies = [
  "eldenring",
  "er-extend-rs-config",
@@ -170,7 +170,7 @@ checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
 
 [[package]]
 name = "er-extend-rs-config"
-version = "0.1.0-alpha"
+version = "0.1.1-alpha"
 dependencies = [
  "serde",
  "toml",
@@ -179,7 +179,7 @@ dependencies = [
 
 [[package]]
 name = "er-extend-rs-discovery"
-version = "0.1.0-alpha"
+version = "0.1.1-alpha"
 dependencies = [
  "eldenring",
  "fromsoftware-shared",
@@ -187,7 +187,7 @@ dependencies = [
 
 [[package]]
 name = "er-extend-rs-esd"
-version = "0.1.0-alpha"
+version = "0.1.1-alpha"
 dependencies = [
  "eldenring",
  "er-extend-rs-config",
@@ -200,7 +200,7 @@ dependencies = [
 
 [[package]]
 name = "er-extend-rs-rva"
-version = "0.1.0-alpha"
+version = "0.1.1-alpha"
 dependencies = [
  "fromsoftware-shared",
  "pelite",
@@ -210,7 +210,7 @@ dependencies = [
 
 [[package]]
 name = "er-extend-rs-text"
-version = "0.1.0-alpha"
+version = "0.1.1-alpha"
 dependencies = [
  "er-extend-rs-config",
  "er-extend-rs-rva",
