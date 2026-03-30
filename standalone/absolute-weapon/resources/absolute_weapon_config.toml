@@ -1,5 +1,10 @@
 # NOTE: You should only really need to change any of this file if things are going wrong.
 
+# A flag id to check to determine whether the menu items should be added.
+# 0 - added always
+# any valid flag id - added when the flag is set.
+load_menu_on_flag_id = 0
+
 # Set to true to log messages to the mod engine log when attempting to upgrade weapons.
 log_debug_messages = false
 

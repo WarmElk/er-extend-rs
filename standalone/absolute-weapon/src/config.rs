@@ -13,6 +13,7 @@ pub struct AbsoluteWeaponConfig {
     pub log_debug_messages: Option<bool>,
     pub allow_debug_window_overlay: Option<bool>,
     pub patch_weapon_reinforcements: Option<bool>,
+    pub load_menu_on_flag_id: Option<u32>,
     pub extra_config: ErExtendRsEsdConfig,
 }
 
