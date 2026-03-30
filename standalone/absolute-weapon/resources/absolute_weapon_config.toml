@@ -1,18 +1,18 @@
-# You should only really need to change any of this file if things are going wrong.
+# NOTE: You should only really need to change any of this file if things are going wrong.
 
 # Set to true to log messages to the mod engine log when attempting to upgrade weapons.
 log_debug_messages = false
 
-# Set to true to show a debug overlay indicating what the current known upgrade level is, how many weapons have been upgraded this session, etc.
-# If setting this to true, an extra grace submenu option will appear that allows the debug window to be toggled.
-show_debug_window_overlay = false
+# Set to true to allow a debug window overlay indicating what the current known upgrade level is, how many weapons have been upgraded this session, etc.
+# The window will start out hidden, with an extra grace submenu option appearing that allows the window visibility to be toggled.
+allow_debug_window_overlay = false
 
 # Some overhaul mods (currently supports Reborn) may change the upgrade system, so auto-upgrading doesn't work correctly.
-# This will check certain values to make sure that you are running Reborn and only patch in-memory values when necessary.
+# This will check certain values to make sure that you are running Reborn and patch in-memory values when necessary.
 # Set this to false if things are breaking and you're not using Reborn.
 patch_weapon_reinforcements = true
 
-# NOTE: Probably don't change anything else below here. It's for convenience for future changes/mods.
+# Extra config for text and menus.
 [extra_config]
 # Text that can add or override Event Text For Talk content.
 [extra_config.extra_text]

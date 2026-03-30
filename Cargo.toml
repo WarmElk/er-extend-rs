@@ -10,34 +10,27 @@ members = [
 ]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.1.0-alpha"
 edition = "2024"
 repository = "https://github.com/WarmElk/er-extend-rs"
 license = "Apache-2.0 OR MIT"
 
 [workspace.dependencies]
-er-extend-rs-config = { path = "er-extend-rs-config", version = "0.1.0" }
-er-extend-rs-discovery = { path = "er-extend-rs-discovery", version = "0.1.0" }
-er-extend-rs-esd = { path = "er-extend-rs-esd", version = "0.1.0" }
-er-extend-rs-rva = { path = "er-extend-rs-rva", version = "0.1.0" }
-er-extend-rs-text = { path = "er-extend-rs-text", version = "0.1.0" }
+er-extend-rs-config = { path = "er-extend-rs-config" }
+er-extend-rs-discovery = { path = "er-extend-rs-discovery" }
+er-extend-rs-esd = { path = "er-extend-rs-esd" }
+er-extend-rs-rva = { path = "er-extend-rs-rva" }
+er-extend-rs-text = { path = "er-extend-rs-text" }
+
+eldenring = "0.13.0"
+fromsoftware-shared = "0.13.0"
 
 hudhook = "0.8.3"
 imgui = "0.12.0"
 pelite = "0.10.0"
 retour = { version = "0.4.0-alpha.4", features = ["static-detour"] }
 serde = { version = "1.0.228", features = ["derive"] }
-toml = "1.0.7"
+toml = "1.1.0"
 tracing = "0.1.44"
 tracing-subscriber = "0.3.23"
 windows-sys = { version = "0.61.2", features = ["Win32_System_LibraryLoader"] }
-
-[workspace.dependencies.eldenring]
-git = "https://github.com/vswarte/fromsoftware-rs"
-tag = "v0.13.0"
-version = "0.13.0"
-
-[workspace.dependencies.fromsoftware-shared]
-git = "https://github.com/vswarte/fromsoftware-rs"
-tag = "v0.13.0"
-version = "0.13.0"

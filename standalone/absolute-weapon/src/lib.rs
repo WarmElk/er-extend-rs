@@ -17,6 +17,7 @@ use tracing::level_filters::LevelFilter;
 use er_extend_rs_discovery::{discover_probable_main_overhaul_mod, ProbableMainOverhaulMod};
 use er_extend_rs_rva::HookError;
 use crate::patch_weapon_reinforcements::patch_weapon_reinforcements;
+use crate::upgrade::PlayerGameDataExtender;
 
 trait FlagManExtender {
     fn compare_and_set_flag(&mut self, flag: u32, expected: bool, set_to: bool) -> bool;
@@ -36,20 +37,19 @@ impl FlagManExtender for CSEventFlagMan {
 struct WeaponUpgrades {
     highest_regular_weapon_level: u8,
     max_regular_weapon_upgrade_level: u8,
-    weapons_upgraded: i32,
+    weapons_upgraded_last_time: i32,
 }
 
 #[derive(Default)]
 struct Initialization {
     hooking_error: Option<HookError>,
-    is_in_world: bool,
+    world_initialized: bool,
     patch_weapon_reinforcements: bool,
 }
 
 #[derive(Default)]
 struct Toggles {
-    upgrade_held_weapons_to_max_so_far: bool,
-    toggle_upgrade_stats_display: bool,
+    allow_debug_window_overlay: bool,
     show_debug_window_overlay: bool,
 }
 
@@ -79,14 +79,21 @@ impl AbsoluteWeapon {
         }
     }
 
-    fn world_initialized(&mut self) {
-        let Some(overhaul) = discover_probable_main_overhaul_mod() else {
-            return
-        };
-        if self.initialization.patch_weapon_reinforcements {
-            patch_weapon_reinforcements(&overhaul);
+    fn world_initialized(&mut self) -> bool {
+        match discover_probable_main_overhaul_mod() {
+            Some(overhaul) => {
+                if self.initialization.patch_weapon_reinforcements {
+                    patch_weapon_reinforcements(&overhaul);
+                }
+                self.weapon_upgrades.update_max_regular_weapon_upgrade_level(&overhaul);
+                tracing::debug!("World initialized with overhaul: {:?}", overhaul);
+                true
+            }
+            None => {
+                tracing::debug!("World not initialized");
+                false
+            }
         }
-        self.weapon_upgrades.update_max_regular_weapon_upgrade_level(&overhaul);
     }
 
     fn find_player_game_data(&self) -> Option<NonNull<PlayerGameData>> {
@@ -101,9 +108,10 @@ impl AbsoluteWeapon {
     }
 
     fn reset(&mut self) {
-        self.initialization.is_in_world = false;
+        self.initialization.world_initialized = false;
+        self.toggles.show_debug_window_overlay = false;
         self.weapon_upgrades.highest_regular_weapon_level = 0;
-        self.weapon_upgrades.weapons_upgraded = 0;
+        self.weapon_upgrades.weapons_upgraded_last_time = 0;
     }
 }
 
@@ -120,11 +128,11 @@ impl ImguiRenderLoop for AbsoluteWeapon {
 
         tracing::debug!("Config: {:?}", config);
 
-        self.toggles.show_debug_window_overlay = config.show_debug_window_overlay.unwrap_or(false);
+        self.toggles.allow_debug_window_overlay = config.allow_debug_window_overlay.unwrap_or(false);
         self.initialization.patch_weapon_reinforcements = config.patch_weapon_reinforcements.unwrap_or(true);
 
         let mut config = config;
-        if !self.toggles.show_debug_window_overlay {
+        if !self.toggles.allow_debug_window_overlay {
             config.filter_out_flag_id(config::TOGGLE_UPGRADE_STATS_DISPLAY_FLAG_ID);
         }
 
@@ -145,31 +153,29 @@ impl ImguiRenderLoop for AbsoluteWeapon {
             },
         };
 
-        if !self.initialization.is_in_world {
-            self.initialization.is_in_world = true;
-            self.world_initialized();
+        if !self.initialization.world_initialized {
+            self.initialization.world_initialized = self.world_initialized();
         }
 
         self.weapon_upgrades.update_highest_regular_weapon_level_achieved(player_game_data);
+
         {
             let Some(flag_man) = unsafe { CSEventFlagMan::instance() }.ok() else {
                 return;
             };
 
-            self.toggles.upgrade_held_weapons_to_max_so_far = flag_man.compare_and_set_flag(config::UPGRADE_ALL_WEAPONS_FLAG_ID, true, false);
-            self.toggles.toggle_upgrade_stats_display = flag_man.compare_and_set_flag(config::TOGGLE_UPGRADE_STATS_DISPLAY_FLAG_ID, true, false);
-        }
+            if self.toggles.allow_debug_window_overlay && flag_man.compare_and_set_flag(config::TOGGLE_UPGRADE_STATS_DISPLAY_FLAG_ID, true, false) {
+                self.toggles.show_debug_window_overlay = !self.toggles.show_debug_window_overlay;
+            }
 
-        if self.toggles.upgrade_held_weapons_to_max_so_far {
-            self.weapon_upgrades.weapons_upgraded = upgrade::upgrade_held_weapons_to_max_so_far(player_game_data, self.weapon_upgrades.highest_regular_weapon_level);
-        }
-        if self.toggles.toggle_upgrade_stats_display {
-            self.toggles.show_debug_window_overlay = !self.toggles.show_debug_window_overlay;
+            if flag_man.compare_and_set_flag(config::UPGRADE_ALL_WEAPONS_FLAG_ID, true, false) {
+                self.weapon_upgrades.weapons_upgraded_last_time = player_game_data.upgrade_held_weapons_to_equivalent_level(self.weapon_upgrades.highest_regular_weapon_level);
+            }
         }
     }
 
     fn render(&mut self, ui: &mut Ui) {
-        if !self.initialization.is_in_world || !self.toggles.show_debug_window_overlay {
+        if !self.initialization.world_initialized || !self.toggles.show_debug_window_overlay {
             return;
         }
         ui.window("##absolute_weapon")
@@ -184,10 +190,9 @@ impl ImguiRenderLoop for AbsoluteWeapon {
                     let text_color = ui.push_style_color(Text, [0.0, 1.0, 0.0, 0.50]);
                     ui.text("Absolute Weapon (show/hide at grace)");
                     ui.separator();
-                    ui.text(format!("Upgrade now                 : {:?}", self.toggles.upgrade_held_weapons_to_max_so_far));
-                    ui.text(format!("Highest regular weapon level: {:?}", self.weapon_upgrades.highest_regular_weapon_level));
-                    ui.text(format!("Max regular weapon level    : {:?}", self.weapon_upgrades.max_regular_weapon_upgrade_level));
-                    ui.text(format!("Number of weapons upgraded  : {:?}", self.weapon_upgrades.weapons_upgraded));
+                    ui.text(format!("Highest regular weapon level        : {:?}", self.weapon_upgrades.highest_regular_weapon_level));
+                    ui.text(format!("Max regular weapon level            : {:?}", self.weapon_upgrades.max_regular_weapon_upgrade_level));
+                    ui.text(format!("Number of weapons upgraded last time: {:?}", self.weapon_upgrades.weapons_upgraded_last_time));
                     if let Some(error) = &self.initialization.hooking_error {
                         ui.separator();
                         ui.text(format!("Hooking error: {:?}", error));

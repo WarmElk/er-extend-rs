@@ -8,6 +8,8 @@ on:
 jobs:
   build-windows:
     runs-on: windows-latest
+    permissions:
+      contents: write
     strategy:
       matrix:
         BUILD_TARGET: [release]
@@ -17,7 +19,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cargo/registry
@@ -31,8 +33,7 @@ jobs:
       - name: Upload DLLs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
         run: |
-          set -eux
-          TAG="${GITHUB_REF#refs/tags/}"
-          gh release view "$TAG" || gh release create "$TAG" --title "$TAG" --notes "Release $TAG"
-          gh release upload "$TAG" target\release\*.dll
+          gh release view ${{ env.TAG }} || gh release create ${{ env.TAG }} --title ${{ env.TAG }} --notes "Release ${{ env.TAG }}"
+          gh release upload ${{ env.TAG }} target\release\*.dll
