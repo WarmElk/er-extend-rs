@@ -10,8 +10,6 @@ const EXPRESSION_INDICATOR_END: &[u8] = &[EXPRESSION_END_INDICATOR];
 const TALK_LIST_EVENT_ID_EVALUATOR_START: &[u8] = &[0x57, 0x84, U32_INDICATOR];
 const TALK_LIST_EVENT_ID_EVALUATOR_END: &[u8] = &[0x95, EXPRESSION_END_INDICATOR];
 
-const ADD_TALK_LIST_DATA_END_INDICATOR: &[u8] = &[0x3F, EXPRESSION_END_INDICATOR];
-
 const CLOSE_SHOP_MENU_EVALUATOR: &[u8] = &[
     0x7b,  // 59 (CheckSpecificPersonMenuIsOpen)
     0x41,  // 1
@@ -35,8 +33,12 @@ const EZ_STATE_PUSH_1: &[u8] = &[U32_INDICATOR, 0x01, 0x00, 0x00, 0x00, EXPRESSI
 
 const SHOW_SHOP_MESSAGE_ARGS: &[EzStateExpression] = &[EzStateExpression::from_static_slice(EZ_STATE_PUSH_1)];
 
+const GET_EVENT_FLAG_ARG_0_START: &[u8] = &[0x4F, U32_INDICATOR];
+const GET_EVENT_FLAG_ARG_0_END: &[u8] = &[0x85, EXPRESSION_END_INDICATOR];
+
 pub trait EzStateExpressionFactory {
     fn new_talk_data_event_id_evaluator(talk_list_event_id: u32) -> Self;
+    fn new_get_event_flag_expression(flag_id: u32) -> Self;
     fn new_close_shop_menu_evaluator() -> Self;
     fn new_handle_back_button_evaluator() -> Self;
 }
@@ -44,7 +46,7 @@ pub trait EzStateExpressionFactory {
 pub trait EzStateExpressionExtender {
     fn new_shop_message_args() -> DynamicSizeSpan<EzStateExpression>;
     fn generate_plain_u32_indicator(plain_u32: u32) -> &'static mut Vec<u8>;
-    fn generate_talk_list_data_end_indicator() -> &'static mut Vec<u8>;
+    fn generate_u32_minus_1_equivalent_indicator() -> &'static mut Vec<u8>;
     fn to_u32_argument(&self) -> Option<u32>;
 }
 
@@ -54,6 +56,15 @@ impl EzStateExpressionFactory for EzStateExpression {
             TALK_LIST_EVENT_ID_EVALUATOR_START.to_vec(),
             talk_list_event_id.to_le_bytes().to_vec(),
             TALK_LIST_EVENT_ID_EVALUATOR_END.to_vec()
+        ].concat()));
+        EzStateExpression::from_static_slice(expression_bytes.as_slice())
+    }
+
+    fn new_get_event_flag_expression(flag_id: u32) -> Self {
+        let expression_bytes = Box::leak(Box::new([
+            GET_EVENT_FLAG_ARG_0_START.to_vec(),
+            flag_id.to_le_bytes().to_vec(),
+            GET_EVENT_FLAG_ARG_0_END.to_vec()
         ].concat()));
         EzStateExpression::from_static_slice(expression_bytes.as_slice())
     }
@@ -80,8 +91,8 @@ impl EzStateExpressionExtender for EzStateExpression {
         ].concat()))
     }
 
-    fn generate_talk_list_data_end_indicator() -> &'static mut Vec<u8> {
-        Box::leak(Box::new(ADD_TALK_LIST_DATA_END_INDICATOR.to_vec()))
+    fn generate_u32_minus_1_equivalent_indicator() -> &'static mut Vec<u8> {
+        Self::generate_plain_u32_indicator(u32::MAX)
     }
 
     fn to_u32_argument(&self) -> Option<u32> {

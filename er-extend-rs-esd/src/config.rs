@@ -18,14 +18,16 @@ pub struct ExtraMenu {
 
 #[derive(Debug, Deserialize, Default, Clone)]
 pub struct EsdSubMenuConfig {
+    pub show_on_event_flag_id: Option<u32>,
     pub menu_item_text_id: u32,
     pub sub_menu_item_config: Vec<EsdSubMenuItemConfig>,
 }
 
 #[derive(Debug, Deserialize, Default, Clone)]
 pub struct EsdSubMenuItemConfig {
+    pub show_on_event_flag_id: Option<u32>,
     pub text_id: u32,
-    pub flag_id: u32,
+    pub select_flag_id: u32,
 }
 
 impl ErExtendRsEsdConfig {
@@ -61,6 +63,6 @@ impl ExtraMenu {
 
 impl EsdSubMenuConfig {
     fn menu_item_flag_ids(&self) -> Vec<u32> {
-        self.sub_menu_item_config.iter().map(|item| item.flag_id).collect()
+        self.sub_menu_item_config.iter().map(|item| item.select_flag_id).collect()
     }
 }

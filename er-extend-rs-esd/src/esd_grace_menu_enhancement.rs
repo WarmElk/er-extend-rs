@@ -1,12 +1,12 @@
-use crate::config::{ExtraMenu, EsdSubMenuItemConfig};
+use crate::config::{EsdSubMenuConfig, ExtraMenu};
 use crate::ez_state_enter_state_hook::{hook_into_ez_state_enter_state, HookBehavior};
 use crate::ez_state_extender::ez_state_event_extender::EzStateEventFactory;
 use crate::ez_state_extender::ez_state_partial_copy::{EzStateEvent, EzStateMachineImpl, EzStateState, EzStateStateGroup, EzStateTransition};
 use crate::ez_state_extender::ez_state_state_extender::{EzStateStateEvents, EzStateStateExtender, EzStateStateFactory, MemoryManagement};
 use crate::ez_state_extender::ez_state_state_group_extender::EzStateStateGroupExtender;
 use crate::ez_state_extender::ez_state_transition_extender::EzStateTransitionFactory;
-use std::ptr::NonNull;
 use er_extend_rs_rva::HookError;
+use std::ptr::NonNull;
 
 const SORT_CHEST_TEXT_ID_U32: u32 = 15000395;
 const CANCEL_TEXT_ID_U32: u32 = 15000372;
@@ -21,9 +21,8 @@ pub fn insert_text_options_into_grace_menu(extra_menu: &ExtraMenu) -> Result<(),
         if entering {
             let mut id_offset: u32 = base_state_and_event_id;
             extra_menu_items.iter().for_each(|sub_menu_config| {
-                let added_option_text_id = sub_menu_config.menu_item_text_id;
                 let sub_menu_item_config_vec = &sub_menu_config.sub_menu_item_config;
-                if add_menu_item_to_grace_menu(id_offset, state_group, added_option_text_id, sub_menu_item_config_vec) {
+                if add_menu_item_to_grace_menu(id_offset, state_group, sub_menu_config) {
                     id_offset += sub_menu_item_config_vec.len() as u32 + 2;
                 }
             });
@@ -32,7 +31,9 @@ pub fn insert_text_options_into_grace_menu(extra_menu: &ExtraMenu) -> Result<(),
     })
 }
 
-fn add_menu_item_to_grace_menu(id_offset: u32, state_group: &EzStateStateGroup, added_item_text_id: u32, sub_menu_item_config_for_item: &[EsdSubMenuItemConfig]) -> bool {
+fn add_menu_item_to_grace_menu(id_offset: u32, state_group: &EzStateStateGroup, sub_menu_config: &EsdSubMenuConfig) -> bool {
+    let added_item_text_id = sub_menu_config.menu_item_text_id;
+
     let mut item_added = false;
 
     let already_added = state_group.find_state_with_text_id(added_item_text_id).is_some();
@@ -40,7 +41,7 @@ fn add_menu_item_to_grace_menu(id_offset: u32, state_group: &EzStateStateGroup, 
     if !already_added &&
         let Some(sort_chest_state) = state_group.find_state_with_text_id(SORT_CHEST_TEXT_ID_U32) &&
         let Some((transition_index, open_repository_state)) = state_group.find_state_with_open_repository_transition() &&
-        let Some((add_talk_list_data_event, add_talk_list_data_transition)) = create_state_menu_event_and_transition(id_offset, state_group, added_item_text_id, sub_menu_item_config_for_item) {
+        let Some((add_talk_list_data_event, add_talk_list_data_transition)) = create_state_menu_event_and_transition(id_offset, state_group, sub_menu_config) {
 
         item_added = true;
 
@@ -56,11 +57,12 @@ fn add_menu_item_to_grace_menu(id_offset: u32, state_group: &EzStateStateGroup, 
     item_added
 }
 
-fn create_state_menu_event_and_transition(id_offset: u32, state_group: &EzStateStateGroup, added_option_text_id: u32, sub_menu_item_config: &[EsdSubMenuItemConfig]) -> Option<(EzStateEvent, EzStateTransition)> {
+fn create_state_menu_event_and_transition(id_offset: u32, state_group: &EzStateStateGroup, sub_menu_config: &EsdSubMenuConfig) -> Option<(EzStateEvent, EzStateTransition)> {
     let base_id = id_offset;
 
     let open_shop_state_id = base_id as i32;
 
+    let sub_menu_item_config = &sub_menu_config.sub_menu_item_config;
     let shop_state_to_open: &mut EzStateState = Box::leak(Box::new(EzStateState::new(open_shop_state_id)));
     {
         shop_state_to_open.close_shop_message();
@@ -68,7 +70,10 @@ fn create_state_menu_event_and_transition(id_offset: u32, state_group: &EzStateS
 
         sub_menu_item_config.iter().enumerate().for_each(|(index, sub_menu_item)| {
             let talk_list_data_event_id = index as u32 + 1;
-            shop_state_to_open.add_talk_list_data(talk_list_data_event_id, sub_menu_item.text_id);
+            match sub_menu_item.show_on_event_flag_id {
+                None | Some(0) => shop_state_to_open.add_talk_list_data(talk_list_data_event_id, sub_menu_item.text_id),
+                Some(flag_id) => shop_state_to_open.add_talk_list_data_if(flag_id, talk_list_data_event_id, sub_menu_item.text_id)
+            }
         });
 
         let cancel_event_id: u32 = sub_menu_item_config.len() as u32 + 1;
@@ -84,7 +89,7 @@ fn create_state_menu_event_and_transition(id_offset: u32, state_group: &EzStateS
     {
         sub_menu_item_config.iter().enumerate().for_each(|(index, sub_menu_item)| {
             let talk_list_data_event_id = index as u32 + 1;
-            shop_state_for_event_transitions.set_event_flag_on_talk_list_data_selection(sub_menu_item.flag_id, talk_list_data_event_id, shop_state_to_open);
+            shop_state_for_event_transitions.set_event_flag_on_talk_list_data_selection(sub_menu_item.select_flag_id, talk_list_data_event_id, shop_state_to_open);
         });
 
         shop_state_for_event_transitions.add_back_button_control(unsafe { state_group.initial_state.as_ref() });
@@ -92,8 +97,11 @@ fn create_state_menu_event_and_transition(id_offset: u32, state_group: &EzStateS
 
     shop_state_to_open.add_close_shop_control(shop_state_for_event_transitions);
 
-    let talk_event_to_open_shop_state = EzStateEvent::new_add_talk_list_data_event(base_id, added_option_text_id);
+    let talk_event_to_open_submenu = match sub_menu_config.show_on_event_flag_id {
+        None | Some(0) => EzStateEvent::new_add_talk_list_data_event(base_id, sub_menu_config.menu_item_text_id),
+        Some(flag_id) => EzStateEvent::new_add_talk_list_data_if_event(flag_id, base_id, sub_menu_config.menu_item_text_id)
+    };
     let transition_to_open_shop_state = EzStateTransition::new_talk_list_data(shop_state_to_open, base_id);
 
-    Some((talk_event_to_open_shop_state, transition_to_open_shop_state))
+    Some((talk_event_to_open_submenu, transition_to_open_shop_state))
 }

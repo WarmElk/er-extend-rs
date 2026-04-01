@@ -28,6 +28,7 @@ pub trait EzStateStateEvents {
     fn show_shop_message(&mut self);
 
     fn add_talk_list_data(&mut self, event_id: u32, text_id: u32);
+    fn add_talk_list_data_if(&mut self, flag_id: u32, event_id: u32, text_id: u32);
     fn add_back_button_control(&mut self, target_state: &EzStateState);
     fn add_close_shop_control(&mut self, transition_state: &EzStateState);
 
@@ -144,6 +145,11 @@ impl EzStateStateEvents for EzStateState {
 
     fn add_talk_list_data(&mut self, event_id: u32, text_id: u32) {
         let event = EzStateEvent::new_add_talk_list_data_event(event_id, text_id);
+        self.append_entry_event(event, MemoryManagement::DeallocateOriginalArray);
+    }
+
+    fn add_talk_list_data_if(&mut self, flag_id: u32, event_id: u32, text_id: u32) {
+        let event = EzStateEvent::new_add_talk_list_data_if_event(flag_id, event_id, text_id);
         self.append_entry_event(event, MemoryManagement::DeallocateOriginalArray);
     }
 
