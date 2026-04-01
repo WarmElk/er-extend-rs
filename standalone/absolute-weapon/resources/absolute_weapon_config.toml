@@ -1,10 +1,5 @@
 # NOTE: You should only really need to change any of this file if things are going wrong.
 
-# A flag id to check to determine whether the menu items should be added.
-# 0 - added always
-# any valid flag id - added when the flag is set.
-load_menu_on_flag_id = 0
-
 # Set to true to log messages to the mod engine log when attempting to upgrade weapons.
 log_debug_messages = false
 
@@ -19,26 +14,39 @@ patch_weapon_reinforcements = true
 
 # Extra config for text and menus.
 [extra_config]
-# Text that can add or override Event Text For Talk content.
-[extra_config.extra_text]
-event_text_for_talk = [
-    { text_id = 1061471000, text = "Absolute Weapon Tools" },
-    { text_id = 1061471001, text = "Upgrade all held weapons to max achieved so far" },
-    { text_id = 1061471002, text = "Show/hide upgrade stats" },
-]
+  # Text that can add or override Event Text For Talk content.
+  [extra_config.extra_text]
+    ## Text ids ending with 1XXX, because they don't need to be in a saved id range, and any 1XXX is invalid for flags.
+    event_text_for_talk = [
+      { text_id = 1061471000, text = "Absolute Weapon Tools" },
+      { text_id = 1061471001, text = "Upgrade all held weapons to max achieved so far" },
+      { text_id = 1061471002, text = "Show/hide upgrade stats" },
+    ]
 
-# Options and submenus to add to the grace menu
-[extra_config.extra_menu]
-# Base id for newly creates states and events so that they don't clash with existing ones.
-# Only change this if menu items aren't appearing, or you are having compatibility issues with other mods.
-base_state_and_event_id = 0xFFFF
+  # Options and submenus to add to the grace menu
+  [extra_config.extra_menu]
+    # Base id for newly creates states and events so that they don't clash with existing ones.
+    # Only change this if menu items aren't appearing, or you are having compatibility issues with other mods.
+    base_state_and_event_id = 0xFFFF
 
-# Grace menu items and submenus
-[[extra_config.extra_menu.extra_menu_items]]
-# The text id from Event Text For Talk that will appear as the new option in the grace menu.
-menu_item_text_id = 1061471000
-# The options in the submenu (text_id from Event Text For Talk, flag_id used to trigger updates)
-sub_menu_item_config = [
-    { text_id = 1061471001, flag_id = 1061475001 },
-    { text_id = 1061471002, flag_id = 1061475002 },
-]
+    # Grace menu items and submenus.
+    # The double [[ and ]] below indicates that this block can be repeated to add new menu and submenu items.
+    [[extra_config.extra_menu.extra_menu_items]]
+      # An optional flag id that will show/hide the grace menu item.
+      #   Any valid flag id - grace menu item is only shown when the flag is set. 0XXX, 4XXX, 7XXX, 8XXX, or 9XXX for saved flags.
+      #   0 (or absent) - grace menu item is shown always
+      show_on_event_flag_id = 0
+
+      # The text id from Event Text For Talk, or added to extra_text above, that will appear as the new option in the grace menu.
+      menu_item_text_id = 1061471000
+
+      # The options in the submenu
+      #   text_id - from Event Text For Talk, or added to extra_text above.
+      #   select_flag_id - set on select. 0XXX, 4XXX, 7XXX, 8XXX, or 9XXX for saved flags. 2XXX or 5XXX for temporary.
+      #   show_on_event_flag_id - An optional flag id that will show/hide the grace menu item.
+      #     Any valid flag id - item is only shown when the flag is set. 0XXX, 4XXX, 7XXX, 8XXX, or 9XXX for saved flags.
+      #     0 (or absent) - item is shown always
+      sub_menu_item_config = [
+        { text_id = 1061471001, select_flag_id = 1061475001 },
+        { text_id = 1061471002, select_flag_id = 1061475002, show_on_event_flag_id = 1061470002 },
+      ]

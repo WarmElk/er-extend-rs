@@ -21,15 +21,10 @@ use std::time::Duration;
 use tracing::level_filters::LevelFilter;
 
 trait FlagManExtender {
-    fn get_flag(&self, flag_id: u32) -> bool;
     fn compare_and_set_flag(&mut self, flag: u32, expected: bool, set_to: bool) -> bool;
 }
 
 impl FlagManExtender for CSEventFlagMan {
-    fn get_flag(&self, flag_id: u32) -> bool {
-        self.virtual_memory_flag.get_flag(flag_id)
-    }
-
     fn compare_and_set_flag(&mut self, flag: u32, expected: bool, set_to: bool) -> bool {
         let matches = self.virtual_memory_flag.get_flag(flag) == expected;
         if matches {
@@ -52,8 +47,6 @@ struct Initialization {
     world_initialized: bool,
     patch_weapon_reinforcements: bool,
     config: Option<AbsoluteWeaponConfig>,
-    load_menu_on_flag_id: u32,
-    menu_loaded: bool,
 }
 
 #[derive(Default)]
@@ -118,19 +111,17 @@ impl AbsoluteWeapon {
 
     fn reset(&mut self) {
         self.initialization.world_initialized = false;
-        self.initialization.menu_loaded = false;
         self.toggles.show_debug_window_overlay = false;
         self.weapon_upgrades.highest_regular_weapon_level = 0;
         self.weapon_upgrades.weapons_upgraded_last_time = 0;
     }
 
     fn initialize_esd_config(&mut self) {
-        if let Some(ref config) = self.initialization.config {
-            if let Err(e) = initialize_er_extend_rs_esd_from_config(&config.extra_config) {
-                tracing::error!("Failed to initialize additional grace menu hook: {:?}", e);
-                self.initialization.hooking_error = Some(e);
-            }
-            self.initialization.menu_loaded = true;
+        if let Some(ref config) = self.initialization.config &&
+            let Err(hook_error) = initialize_er_extend_rs_esd_from_config(&config.extra_config) {
+
+            tracing::error!("Failed to initialize additional grace menu hook: {:?}", hook_error);
+            self.initialization.hooking_error = Some(hook_error);
         }
     }
 }
@@ -150,15 +141,9 @@ impl ImguiRenderLoop for AbsoluteWeapon {
 
         self.toggles.allow_debug_window_overlay = config.allow_debug_window_overlay.unwrap_or(false);
         self.initialization.patch_weapon_reinforcements = config.patch_weapon_reinforcements.unwrap_or(true);
-
-        let mut config = config;
-        if !self.toggles.allow_debug_window_overlay {
-            config.filter_out_flag_id(config::TOGGLE_UPGRADE_STATS_DISPLAY_FLAG_ID);
-        }
-
-        self.initialization.load_menu_on_flag_id = config.load_menu_on_flag_id.unwrap_or_default();
-
         self.initialization.config = Some(config);
+
+        self.initialize_esd_config();
     }
 
     fn before_render(&mut self, _ctx: &mut Context, _render_context: &mut dyn RenderContext) {
@@ -181,16 +166,14 @@ impl ImguiRenderLoop for AbsoluteWeapon {
                 return;
             };
 
-            if !self.initialization.menu_loaded && (self.initialization.load_menu_on_flag_id == 0 || flag_man.get_flag(self.initialization.load_menu_on_flag_id)) {
-                self.initialize_esd_config();
+            if self.toggles.allow_debug_window_overlay {
+                flag_man.compare_and_set_flag(config::ALLOW_UPGRADE_STATS_DISPLAY_FLAG_ID, false, true);
+                if flag_man.compare_and_set_flag(config::TOGGLE_UPGRADE_STATS_DISPLAY_FLAG_ID, true, false) {
+                    self.toggles.show_debug_window_overlay = !self.toggles.show_debug_window_overlay;
+                }
             }
-
-            if !self.initialization.menu_loaded {
-                return;
-            }
-
-            if self.toggles.allow_debug_window_overlay && flag_man.compare_and_set_flag(config::TOGGLE_UPGRADE_STATS_DISPLAY_FLAG_ID, true, false) {
-                self.toggles.show_debug_window_overlay = !self.toggles.show_debug_window_overlay;
+            else {
+                flag_man.compare_and_set_flag(config::ALLOW_UPGRADE_STATS_DISPLAY_FLAG_ID, true, false);
             }
 
             if flag_man.compare_and_set_flag(config::UPGRADE_ALL_WEAPONS_FLAG_ID, true, false) {
@@ -218,9 +201,6 @@ impl ImguiRenderLoop for AbsoluteWeapon {
                     ui.text(format!("Highest regular weapon level        : {:?}", self.weapon_upgrades.highest_regular_weapon_level));
                     ui.text(format!("Max regular weapon level            : {:?}", self.weapon_upgrades.max_regular_weapon_upgrade_level));
                     ui.text(format!("Number of weapons upgraded last time: {:?}", self.weapon_upgrades.weapons_upgraded_last_time));
-                    ui.separator();
-                    ui.text(format!("Flag id    : {:?}", self.initialization.load_menu_on_flag_id));
-                    ui.text(format!("Menu loaded: {:?}", self.initialization.menu_loaded));
                     if let Some(error) = &self.initialization.hooking_error {
                         ui.separator();
                         ui.text(format!("Hooking error: {:?}", error));
