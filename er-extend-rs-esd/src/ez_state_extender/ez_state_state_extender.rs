@@ -32,7 +32,7 @@ pub trait EzStateStateEvents {
     fn add_back_button_control(&mut self, target_state: &EzStateState);
     fn add_close_shop_control(&mut self, transition_state: &EzStateState);
 
-    fn set_event_flag_on_talk_list_data_selection(&mut self, flag_id_to_set: u32, talk_list_data_event_id: u32, target_state: &EzStateState);
+    fn set_event_flag_on_talk_list_data_selection(&mut self, flag_id_to_set: u32, talk_list_data_event_id: u32, target_state: &EzStateState, confirm_text_id: Option<u32>);
 }
 
 impl EzStateStateFactory for EzStateState {
@@ -163,7 +163,7 @@ impl EzStateStateEvents for EzStateState {
         self.append_transition(0, close_shop_menu_transition, MemoryManagement::DeallocateOriginalArray);
     }
 
-    fn set_event_flag_on_talk_list_data_selection(&mut self, flag_id_to_set: u32, talk_list_data_event_id: u32, target_state: &EzStateState) {
+    fn set_event_flag_on_talk_list_data_selection(&mut self, flag_id_to_set: u32, talk_list_data_event_id: u32, target_state: &EzStateState, confirm_text_id: Option<u32>) {
         let set_event_flag_state_id = self.id + talk_list_data_event_id as i32;
 
         tracing::debug!("sub_menu_event_id: {}, set_event_flag_state_id: {}", talk_list_data_event_id, set_event_flag_state_id);
@@ -177,7 +177,29 @@ impl EzStateStateEvents for EzStateState {
         set_event_flag_state.append_entry_event(set_event_flag_event, MemoryManagement::DeallocateOriginalArray);
         set_event_flag_state.append_transition(set_event_flag_state.transitions.len(), handle_set_flag_state_transition, MemoryManagement::DeallocateOriginalArray);
 
-        let sub_menu_selected_transition = Box::leak(Box::new(EzStateTransition::new_talk_list_data(set_event_flag_state, talk_list_data_event_id)));
+        let selection_state = match confirm_text_id {
+            None | Some(0) => set_event_flag_state,
+            Some(text_id) => create_confirmation_state(text_id, set_event_flag_state, target_state)
+        };
+
+        let sub_menu_selected_transition = Box::leak(Box::new(EzStateTransition::new_talk_list_data(selection_state, talk_list_data_event_id)));
         self.append_transition(0, sub_menu_selected_transition, MemoryManagement::DeallocateOriginalArray);
     }
+}
+
+fn create_confirmation_state<'a>(confirmation_text_id: u32, set_event_flag_state: &EzStateState, original_target_state: &EzStateState) -> &'a EzStateState {
+    let handle_confirmation_state_id = set_event_flag_state.id + 1;
+    let handle_confirmation_state: &mut EzStateState = Box::leak(Box::new(EzStateState::new(handle_confirmation_state_id)));
+
+    let handle_confirmation_state_event = EzStateEvent::new_grace_confirmation_dialog_event(confirmation_text_id);
+
+    handle_confirmation_state.append_entry_event(handle_confirmation_state_event, MemoryManagement::DeallocateOriginalArray);
+
+    let dialog_confirmed_transition = Box::leak(Box::new(EzStateTransition::new_dialog_confirmed_transition(set_event_flag_state)));
+    let call_done_transition = Box::leak(Box::new(EzStateTransition::new_call_done_transition(original_target_state)));
+
+    handle_confirmation_state.append_transition(0, dialog_confirmed_transition, MemoryManagement::DeallocateOriginalArray);
+    handle_confirmation_state.append_transition(1, call_done_transition, MemoryManagement::DeallocateOriginalArray);
+
+    handle_confirmation_state
 }

@@ -28,6 +28,7 @@ pub struct EsdSubMenuItemConfig {
     pub show_on_event_flag_id: Option<u32>,
     pub text_id: u32,
     pub select_flag_id: u32,
+    pub confirmation_text_id: Option<u32>,
 }
 
 impl ErExtendRsEsdConfig {

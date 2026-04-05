@@ -69,14 +69,14 @@ fn create_state_menu_event_and_transition(id_offset: u32, state_group: &EzStateS
         shop_state_to_open.clear_talk_list_data();
 
         sub_menu_item_config.iter().enumerate().for_each(|(index, sub_menu_item)| {
-            let talk_list_data_event_id = index as u32 + 1;
+            let talk_list_data_event_id = (index as u32 + 1) * 2;
             match sub_menu_item.show_on_event_flag_id {
                 None | Some(0) => shop_state_to_open.add_talk_list_data(talk_list_data_event_id, sub_menu_item.text_id),
                 Some(flag_id) => shop_state_to_open.add_talk_list_data_if(flag_id, talk_list_data_event_id, sub_menu_item.text_id)
             }
         });
 
-        let cancel_event_id: u32 = sub_menu_item_config.len() as u32 + 1;
+        let cancel_event_id: u32 = (sub_menu_item_config.len() as u32 + 1) * 2;
         tracing::debug!("cancel_event_id: {}", cancel_event_id);
         shop_state_to_open.add_talk_list_data(cancel_event_id, CANCEL_TEXT_ID_U32);
         shop_state_to_open.show_shop_message();
@@ -88,8 +88,8 @@ fn create_state_menu_event_and_transition(id_offset: u32, state_group: &EzStateS
     let shop_state_for_event_transitions = Box::leak(Box::new(EzStateState::new(transition_handler_state_id)));
     {
         sub_menu_item_config.iter().enumerate().for_each(|(index, sub_menu_item)| {
-            let talk_list_data_event_id = index as u32 + 1;
-            shop_state_for_event_transitions.set_event_flag_on_talk_list_data_selection(sub_menu_item.select_flag_id, talk_list_data_event_id, shop_state_to_open);
+            let talk_list_data_event_id = (index as u32 + 1) * 2;
+            shop_state_for_event_transitions.set_event_flag_on_talk_list_data_selection(sub_menu_item.select_flag_id, talk_list_data_event_id, shop_state_to_open, sub_menu_item.confirmation_text_id);
         });
 
         shop_state_for_event_transitions.add_back_button_control(unsafe { state_group.initial_state.as_ref() });

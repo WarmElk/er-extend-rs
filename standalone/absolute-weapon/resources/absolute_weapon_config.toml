@@ -21,6 +21,7 @@ patch_weapon_reinforcements = true
       { text_id = 1061471000, text = "Absolute Weapon Tools" },
       { text_id = 1061471001, text = "Upgrade all held weapons to max achieved so far" },
       { text_id = 1061471002, text = "Show/hide upgrade stats" },
+      { text_id = 1061471003, text = "This will update all weapons in your inventory to the max achieved so far. Are you sure?" },
     ]
 
   # Options and submenus to add to the grace menu
@@ -43,10 +44,11 @@ patch_weapon_reinforcements = true
       # The options in the submenu
       #   text_id - from Event Text For Talk, or added to extra_text above.
       #   select_flag_id - set on select. 0XXX, 4XXX, 7XXX, 8XXX, or 9XXX for saved flags. 2XXX or 5XXX for temporary.
+      #   confirmation_text_id - An optional text id that will show in a confirmation dialog before setting the flag.
       #   show_on_event_flag_id - An optional flag id that will show/hide the grace menu item.
       #     Any valid flag id - item is only shown when the flag is set. 0XXX, 4XXX, 7XXX, 8XXX, or 9XXX for saved flags.
       #     0 (or absent) - item is shown always
       sub_menu_item_config = [
-        { text_id = 1061471001, select_flag_id = 1061475001 },
+        { text_id = 1061471001, select_flag_id = 1061475001, confirmation_text_id = 1061471003 },
         { text_id = 1061471002, select_flag_id = 1061475002, show_on_event_flag_id = 1061470002 },
       ]

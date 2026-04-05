@@ -7,6 +7,8 @@ use std::ptr::NonNull;
 pub trait EzStateTransitionFactory {
     fn new(target_state: &EzStateState, evaluator: EzStateExpression) -> Self;
     fn new_talk_list_data(target_state: &EzStateState, event_id: u32) -> Self;
+    fn new_dialog_confirmed_transition(target_state: &EzStateState) -> Self;
+    fn new_call_done_transition(target_state: &EzStateState) -> Self;
 }
 
 pub trait EzStateTransitionExtender {
@@ -29,6 +31,24 @@ impl EzStateTransitionFactory for EzStateTransition {
             pass_events: DynamicSizeSpan::empty(),
             sub_transitions: DynamicSizeSpan::empty(),
             evaluator: EzStateExpression::new_talk_data_event_id_evaluator(event_id),
+        }
+    }
+
+    fn new_dialog_confirmed_transition(target_state: &EzStateState) -> Self {
+        Self {
+            target_state: Some(NonNull::from_ref(target_state)),
+            pass_events: DynamicSizeSpan::empty(),
+            sub_transitions: DynamicSizeSpan::empty(),
+            evaluator: EzStateExpression::new_dialog_confirmed_evaluator(),
+        }
+    }
+
+    fn new_call_done_transition(target_state: &EzStateState) -> Self {
+        Self {
+            target_state: Some(NonNull::from_ref(target_state)),
+            pass_events: DynamicSizeSpan::empty(),
+            sub_transitions: DynamicSizeSpan::empty(),
+            evaluator: EzStateExpression::new_call_done_evaluator(),
         }
     }
 }

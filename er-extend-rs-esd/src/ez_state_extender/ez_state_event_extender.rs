@@ -37,6 +37,11 @@ pub const EZ_STATE_COMMAND_ADD_TALK_LIST_DATA_IF: EzStateEventCommand = EzStateE
     id: 19,
 };
 
+pub const EZ_STATE_COMMAND_GRACE_GENERIC_CONFIRMATION_DIALOG: EzStateEventCommand = EzStateEventCommand {
+    bank: 6,
+    id: i32::MAX, // Calling t000001000_x0 in the grace ESD ends up with this id.
+};
+
 
 pub trait EzStateEventFactory {
     fn new(command: EzStateEventCommand, arguments: DynamicSizeSpan<EzStateExpression>) -> Self;
@@ -44,6 +49,7 @@ pub trait EzStateEventFactory {
     fn new_add_talk_list_data_event(talk_list_event_id: u32, option_text_id: u32) -> Self;
     fn new_add_talk_list_data_if_event(flag_id: u32, talk_list_event_id: u32, option_text_id: u32) -> Self;
     fn new_set_event_flag_event(flag_id: u32) -> Self;
+    fn new_grace_confirmation_dialog_event(text_id: u32) -> Self;
     fn new_close_shop_event() -> Self;
     fn new_clear_talk_list_data_event() -> Self;
 }
@@ -52,6 +58,7 @@ pub trait EzStateEventExtender {
     fn generate_add_talk_list_data_arguments(talk_list_event_id: u32, option_text_id: u32) -> &'static mut [EzStateExpression; 3];
     fn generate_add_talk_list_data_if_arguments(flag_id: u32, talk_list_event_id: u32, option_text_id: u32) -> &'static mut [EzStateExpression; 4];
     fn generate_set_event_flag_arguments(flag_id: u32) -> &'static mut [EzStateExpression; 2];
+    fn generate_plain_u32_arguments(flag_id: u32) -> &'static mut [EzStateExpression; 1];
 }
 
 impl EzStateEventFactory for EzStateEvent {
@@ -102,6 +109,17 @@ impl EzStateEventFactory for EzStateEvent {
         }
     }
 
+    fn new_grace_confirmation_dialog_event(text_id: u32) -> Self {
+        let confirmation_text = EzStateEvent::generate_plain_u32_arguments(text_id);
+        Self {
+            command: EZ_STATE_COMMAND_GRACE_GENERIC_CONFIRMATION_DIALOG,
+            arguments: DynamicSizeSpan::from_static_slice(
+                confirmation_text,
+            ),
+        }
+    }
+
+
     fn new_close_shop_event() -> Self {
         Self::new_no_args_command_event(EZ_STATE_COMMAND_CLOSE_SHOP)
     }
@@ -145,6 +163,13 @@ impl EzStateEventExtender for EzStateEvent {
         Box::leak(Box::new([
             EzStateExpression::from_static_slice(event_flag_indicator.as_slice()),
             EzStateExpression::from_static_slice(on_indicator.as_slice()),
+        ]))
+    }
+
+    fn generate_plain_u32_arguments(id: u32) -> &'static mut [EzStateExpression; 1] {
+        let indicator = EzStateExpression::generate_plain_u32_indicator(id);
+        Box::leak(Box::new([
+            EzStateExpression::from_static_slice(indicator.as_slice()),
         ]))
     }
 }
