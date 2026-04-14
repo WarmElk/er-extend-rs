@@ -1,0 +1,71 @@
+# NOTE: You should only really need to change any of this file if things are going wrong.
+
+# Set to true to log messages to the mod engine log when changing the difficulty.
+log_debug_messages = false
+
+# Difficulty multiplier power per level (enemy max hp and character damage taken)
+# The first level ends up much more than this for NG, because of how the multipliers work.
+more_difficult_er_multiplier = 1.1
+
+# Extra config for text and menus.
+[extra_config]
+  # Text that can add or override Event Text For Talk content.
+  [extra_config.extra_text]
+    ## Text ids ending with 1XXX, because they don't need to be in a saved id range, and any 1XXX is invalid for flags.
+    event_text_for_talk = [
+      { text_id = 1061471099, text = "More Difficult ER" },
+      { text_id = 1061471100, text = "Make more difficult. Currently +0" },
+      { text_id = 1061471101, text = "Make more difficult. Currently +1" },
+      { text_id = 1061471102, text = "Make more difficult. Currently +2" },
+      { text_id = 1061471103, text = "Make more difficult. Currently +3" },
+      { text_id = 1061471104, text = "Make more difficult. Currently +4" },
+      { text_id = 1061471111, text = "Make less difficult. Currently +1" },
+      { text_id = 1061471112, text = "Make less difficult. Currently +2" },
+      { text_id = 1061471113, text = "Make less difficult. Currently +3" },
+      { text_id = 1061471114, text = "Make less difficult. Currently +4" },
+      { text_id = 1061471115, text = "Make less difficult. Currently +5" },
+      { text_id = 1061471120, text = "This will change the diffculty to +0. Are you sure?" },
+      { text_id = 1061471121, text = "This will change the diffculty to +1. Are you sure?" },
+      { text_id = 1061471122, text = "This will change the diffculty to +2. Are you sure?" },
+      { text_id = 1061471123, text = "This will change the diffculty to +3. Are you sure?" },
+      { text_id = 1061471124, text = "This will change the diffculty to +4. Are you sure?" },
+      { text_id = 1061471125, text = "This will change the diffculty to +5. Are you sure?" },
+    ]
+
+  # Options and submenus to add to the grace menu
+  [extra_config.extra_menu]
+    # Base id for newly creates states and events so that they don't clash with existing ones.
+    # Only change this if menu items aren't appearing, or you are having compatibility issues with other mods.
+    base_state_and_event_id = 0x1FFFF
+
+    # Grace menu items and submenus.
+    # The double [[ and ]] below indicates that this block can be repeated to add new menu and submenu items.
+    [[extra_config.extra_menu.extra_menu_items]]
+      # An optional flag id that will show/hide the grace menu item.
+      #   Any valid flag id - grace menu item is only shown when the flag is set. 0XXX, 4XXX, 7XXX, 8XXX, or 9XXX for saved flags.
+      #   0 (or absent) - grace menu item is shown always
+      show_on_event_flag_id = 0
+
+      # The text id from Event Text For Talk, or added to extra_text above, that will appear as the new option in the grace menu.
+      menu_item_text_id = 1061471099
+
+      # The options in the submenu
+      #   text_id - from Event Text For Talk, or added to extra_text above.
+      #   select_flag_id - set on select. 0XXX, 4XXX, 7XXX, 8XXX, or 9XXX for saved flags. 2XXX or 5XXX for temporary.
+      #   asssert_on_event_flag_id - An optional event flag to wait for being set, after setting a different flag on select. (Can be used to delay menu reloading when chaining flags)
+      #   confirmation_text_id - An optional text id that will show in a confirmation dialog before setting the flag.
+      #   show_on_event_flag_id - An optional flag id that will show/hide the grace menu item.
+      #     Any valid flag id - item is only shown when the flag is set. 0XXX, 4XXX, 7XXX, 8XXX, or 9XXX for saved flags.
+      #     0 (or absent) - item is shown always
+      sub_menu_item_config = [
+        { text_id = 1061471100, select_flag_id = 1061472101, assert_on_select_flag_id = 1061460001, confirmation_text_id = 1061471121, show_on_event_flag_id = 1061460000 },
+        { text_id = 1061471101, select_flag_id = 1061472102, assert_on_select_flag_id = 1061460002, confirmation_text_id = 1061471122, show_on_event_flag_id = 1061460001 },
+        { text_id = 1061471102, select_flag_id = 1061472103, assert_on_select_flag_id = 1061460003, confirmation_text_id = 1061471123, show_on_event_flag_id = 1061460002 },
+        { text_id = 1061471103, select_flag_id = 1061472104, assert_on_select_flag_id = 1061460004, confirmation_text_id = 1061471124, show_on_event_flag_id = 1061460003 },
+        { text_id = 1061471104, select_flag_id = 1061472105, assert_on_select_flag_id = 1061460005, confirmation_text_id = 1061471125, show_on_event_flag_id = 1061460004 },
+        { text_id = 1061471111, select_flag_id = 1061472100, assert_on_select_flag_id = 1061460000, confirmation_text_id = 1061471120, show_on_event_flag_id = 1061460001 },
+        { text_id = 1061471112, select_flag_id = 1061472101, assert_on_select_flag_id = 1061460001, confirmation_text_id = 1061471121, show_on_event_flag_id = 1061460002 },
+        { text_id = 1061471113, select_flag_id = 1061472102, assert_on_select_flag_id = 1061460002, confirmation_text_id = 1061471122, show_on_event_flag_id = 1061460003 },
+        { text_id = 1061471114, select_flag_id = 1061472103, assert_on_select_flag_id = 1061460003, confirmation_text_id = 1061471123, show_on_event_flag_id = 1061460004 },
+        { text_id = 1061471115, select_flag_id = 1061472104, assert_on_select_flag_id = 1061460004, confirmation_text_id = 1061471124, show_on_event_flag_id = 1061460005 },
+      ]
