@@ -44,6 +44,7 @@ patch_weapon_reinforcements = true
       # The options in the submenu
       #   text_id - from Event Text For Talk, or added to extra_text above.
       #   select_flag_id - set on select. 0XXX, 4XXX, 7XXX, 8XXX, or 9XXX for saved flags. 2XXX or 5XXX for temporary.
+      #   asssert_on_select_flag_id - An optional event flag to wait for being set, after setting a different flag on select. (Can be used to delay menu reloading when chaining flags)
       #   confirmation_text_id - An optional text id that will show in a confirmation dialog before setting the flag.
       #   show_on_event_flag_id - An optional flag id that will show/hide the grace menu item.
       #     Any valid flag id - item is only shown when the flag is set. 0XXX, 4XXX, 7XXX, 8XXX, or 9XXX for saved flags.

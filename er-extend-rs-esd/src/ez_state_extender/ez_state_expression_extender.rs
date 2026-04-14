@@ -11,22 +11,17 @@ const EXPRESSION_INDICATOR_END: &[u8] = &[EXPRESSION_END_INDICATOR];
 const TALK_LIST_EVENT_ID_EVALUATOR_START: &[u8] = &[0x57, 0x84, U32_INDICATOR];
 const TALK_LIST_EVENT_ID_EVALUATOR_END: &[u8] = &[EQUALS, EXPRESSION_END_INDICATOR];
 
-const CLOSE_SHOP_MENU_EVALUATOR: &[u8] = &[
-    0x7b,  // 59 (CheckSpecificPersonMenuIsOpen)
-    0x41,  // 1
-    0x40,  // 0
-    0x86,  // call with 2 args
-    0x41,  // 1
-    EQUALS,  // ==
-    0x7a,  // 58 (CheckSpecificPersonGenericDialogIsOpen)
-    0x40,  // 0
-    0x85,  // call with 1 arg
-    0x40,  // 0
-    EQUALS,  // ==
-    0x98,  // &&
-    0x40,  // 0
-    EQUALS,  // ==
-    EXPRESSION_END_INDICATOR   // end
+const NOT_MENU_OPEN_EVALUATORS: &[u8] = &[
+    123,
+    U32_INDICATOR, 1, 0, 0, 0,
+    U32_INDICATOR, 0, 0, 0, 0,
+    134, 122,
+    U32_INDICATOR, 0, 0, 0, 0,
+    133,
+    U32_INDICATOR, 0, 0, 0, 0,
+    149, 152,
+    U32_INDICATOR, 0, 0, 0, 0,
+    149, EXPRESSION_END_INDICATOR
 ];
 
 const HANDLE_BACK_BUTTON_EVALUATOR: &[u8] = &[0x41, EXPRESSION_END_INDICATOR];
@@ -75,7 +70,7 @@ impl EzStateExpressionFactory for EzStateExpression {
     }
 
     fn new_close_shop_menu_evaluator() -> Self {
-        EzStateExpression::from_static_slice(CLOSE_SHOP_MENU_EVALUATOR)
+        EzStateExpression::from_static_slice(NOT_MENU_OPEN_EVALUATORS)
     }
 
     fn new_handle_back_button_evaluator() -> Self {

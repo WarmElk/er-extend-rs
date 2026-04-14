@@ -99,12 +99,12 @@ impl EzStateEventFactory for EzStateEvent {
     }
 
     fn new_set_event_flag_event(flag_id: u32) -> Self {
-        let upgrade_add_talk_list_data_arguments = Self::generate_set_event_flag_arguments(flag_id);
+        let set_event_flag_arguments = Self::generate_set_event_flag_arguments(flag_id);
 
         Self {
             command: EZ_STATE_COMMAND_SET_EVENT_FLAG,
             arguments: DynamicSizeSpan::from_static_slice(
-                upgrade_add_talk_list_data_arguments,
+                set_event_flag_arguments,
             ),
         }
     }
