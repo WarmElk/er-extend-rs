@@ -5,6 +5,7 @@ use crate::ez_state_extender::ez_state_partial_copy::{EzStateEvent, EzStateExpre
 use crate::ez_state_extender::ez_state_transition_extender::EzStateTransitionFactory;
 use crate::ez_state_extender::stl_partial_copy::DynamicSizeSpan;
 use std::ptr::NonNull;
+use crate::config::EsdSubMenuItemConfig;
 
 pub enum MemoryManagement {
     DeallocateOriginalArray,
@@ -32,7 +33,7 @@ pub trait EzStateStateEvents {
     fn add_back_button_control(&mut self, target_state: &EzStateState);
     fn add_close_shop_control(&mut self, transition_state: &EzStateState);
 
-    fn set_event_flag_on_talk_list_data_selection(&mut self, flag_id_to_set: u32, talk_list_data_event_id: u32, target_state: &EzStateState, confirm_text_id: Option<u32>);
+    fn set_event_flag_on_talk_list_data_selection(&mut self, flag_id_to_set: u32, talk_list_data_event_id: u32, target_state: &EzStateState, sub_menu_item_config: &EsdSubMenuItemConfig);
 }
 
 impl EzStateStateFactory for EzStateState {
@@ -163,7 +164,7 @@ impl EzStateStateEvents for EzStateState {
         self.append_transition(0, close_shop_menu_transition, MemoryManagement::DeallocateOriginalArray);
     }
 
-    fn set_event_flag_on_talk_list_data_selection(&mut self, flag_id_to_set: u32, talk_list_data_event_id: u32, target_state: &EzStateState, confirm_text_id: Option<u32>) {
+    fn set_event_flag_on_talk_list_data_selection(&mut self, flag_id_to_set: u32, talk_list_data_event_id: u32, target_state: &EzStateState, sub_menu_item_config: &EsdSubMenuItemConfig) {
         let set_event_flag_state_id = self.id + talk_list_data_event_id as i32;
 
         tracing::debug!("sub_menu_event_id: {}, set_event_flag_state_id: {}", talk_list_data_event_id, set_event_flag_state_id);
@@ -172,12 +173,15 @@ impl EzStateStateEvents for EzStateState {
 
         let set_event_flag_event = EzStateEvent::new_set_event_flag_event(flag_id_to_set);
 
-        let handle_set_flag_state_transition = Box::leak(Box::new(EzStateTransition::new_talk_list_data(target_state, talk_list_data_event_id)));
+        let handle_set_flag_state_transition = Box::leak(Box::new(match sub_menu_item_config.assert_on_select_flag_id {
+            None | Some(0) => EzStateTransition::new_handle_back_button_transition(target_state),
+            Some(assert_flag_id) => EzStateTransition::new_assert_event_flag_transition(target_state, assert_flag_id)
+        }));
 
         set_event_flag_state.append_entry_event(set_event_flag_event, MemoryManagement::DeallocateOriginalArray);
         set_event_flag_state.append_transition(set_event_flag_state.transitions.len(), handle_set_flag_state_transition, MemoryManagement::DeallocateOriginalArray);
 
-        let selection_state = match confirm_text_id {
+        let selection_state = match sub_menu_item_config.confirmation_text_id {
             None | Some(0) => set_event_flag_state,
             Some(text_id) => create_confirmation_state(text_id, set_event_flag_state, target_state)
         };

@@ -9,6 +9,8 @@ pub trait EzStateTransitionFactory {
     fn new_talk_list_data(target_state: &EzStateState, event_id: u32) -> Self;
     fn new_dialog_confirmed_transition(target_state: &EzStateState) -> Self;
     fn new_call_done_transition(target_state: &EzStateState) -> Self;
+    fn new_assert_event_flag_transition(target_state: &EzStateState, assert_flag_id: u32) -> Self;
+    fn new_handle_back_button_transition(target_state: &EzStateState) -> Self;
 }
 
 pub trait EzStateTransitionExtender {
@@ -49,6 +51,24 @@ impl EzStateTransitionFactory for EzStateTransition {
             pass_events: DynamicSizeSpan::empty(),
             sub_transitions: DynamicSizeSpan::empty(),
             evaluator: EzStateExpression::new_call_done_evaluator(),
+        }
+    }
+
+    fn new_assert_event_flag_transition(target_state: &EzStateState, assert_flag_id: u32) -> Self {
+        Self {
+            target_state: Some(NonNull::from_ref(target_state)),
+            pass_events: DynamicSizeSpan::empty(),
+            sub_transitions: DynamicSizeSpan::empty(),
+            evaluator: EzStateExpression::new_get_event_flag_expression(assert_flag_id),
+        }
+    }
+
+    fn new_handle_back_button_transition(target_state: &EzStateState) -> Self {
+        Self {
+            target_state: Some(NonNull::from_ref(target_state)),
+            pass_events: DynamicSizeSpan::empty(),
+            sub_transitions: DynamicSizeSpan::empty(),
+            evaluator: EzStateExpression::new_handle_back_button_evaluator(),
         }
     }
 }
