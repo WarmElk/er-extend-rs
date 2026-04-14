@@ -1,0 +1,21 @@
+[package]
+name = "more-difficult-er"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+er-extend-rs-config.workspace = true
+er-extend-rs-esd.workspace = true
+er-extend-rs-rva.workspace = true
+
+eldenring.workspace = true
+fromsoftware-shared.workspace = true
+serde.workspace = true
+tracing-subscriber.workspace = true
+tracing.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+name = "more_difficult_er"

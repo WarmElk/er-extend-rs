@@ -13,6 +13,7 @@ Contains various Rust crates that make use of and extend the functionality of El
 ## Crates with standalone and example dlls
 
 - standalone/absolute-weapon - Adds an option to the grace menu to upgrade all current inventory weapons to the max achieved so far.
+- standalone/more-difficult-er - Adds an option to the grace menu to make the game more difficult over a few levels.
 
 ## Credits
 
