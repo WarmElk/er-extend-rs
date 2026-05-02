@@ -1,9 +1,10 @@
 mod config;
 
+use std::collections::HashMap;
 use std::time::Duration;
-use eldenring::cs::{CSEventFlagMan, CSTaskGroupIndex, CSTaskImp, ClearCountCorrectParam, SoloParamRepository, WorldChrMan};
+use eldenring::cs::{CSEventFlagMan, CSTaskGroupIndex, CSTaskImp, SoloParamRepository, SpEffectParam, WorldChrMan};
 use eldenring::fd4::FD4TaskData;
-use eldenring::param::CLEAR_COUNT_CORRECT_PARAM_ST;
+use eldenring::param::SP_EFFECT_PARAM_ST;
 use eldenring::util::system::wait_for_system_init;
 use er_extend_rs_esd::initialize_er_extend_rs_esd_from_config;
 use er_extend_rs_rva::HookError;
@@ -39,7 +40,7 @@ struct MoreDifficultER {
     current_difficulty_level: Option<u32>,
     config: Option<MoreDifficultERConfig>,
     hooking_error: Option<HookError>,
-    original_data: Vec<MoreDifficultData>,
+    original_data: HashMap<u32, MoreDifficultData>,
 }
 
 struct MoreDifficultData {
@@ -52,7 +53,18 @@ struct MoreDifficultData {
 }
 
 impl MoreDifficultData {
-    fn update_with_raw_original_data(&self, data: &mut CLEAR_COUNT_CORRECT_PARAM_ST) {
+    fn new(sp_effect_param: &SP_EFFECT_PARAM_ST) -> Self {
+        MoreDifficultData {
+            max_hp_rate: sp_effect_param.max_hp_rate(),
+            physics_attack_rate: sp_effect_param.physics_attack_rate(),
+            magic_attack_rate: sp_effect_param.magic_attack_rate(),
+            fire_attack_rate: sp_effect_param.fire_attack_rate(),
+            thunder_attack_rate: sp_effect_param.thunder_attack_rate(),
+            dark_attack_rate: sp_effect_param.dark_attack_rate(),
+        }
+    }
+
+    fn update_with_raw_original_data(&self, data: &mut SP_EFFECT_PARAM_ST) {
         data.set_max_hp_rate(self.max_hp_rate);
         data.set_physics_attack_rate(self.physics_attack_rate);
         data.set_magic_attack_rate(self.magic_attack_rate);
@@ -61,45 +73,13 @@ impl MoreDifficultData {
         data.set_dark_attack_rate(self.dark_attack_rate);
     }
 
-    fn update_with_original_data_for_multiplier(&self, data: &mut CLEAR_COUNT_CORRECT_PARAM_ST, multiplier: f32) {
-        data.set_max_hp_rate(self.max_hp_rate() * multiplier);
-        data.set_physics_attack_rate(self.physics_attack_rate() * multiplier);
-        data.set_magic_attack_rate(self.magic_attack_rate() * multiplier);
-        data.set_fire_attack_rate(self.fire_attack_rate() * multiplier);
-        data.set_thunder_attack_rate(self.thunder_attack_rate() * multiplier);
-        data.set_dark_attack_rate(self.dark_attack_rate() * multiplier);
-    }
-
-    fn max_hp_rate(&self) -> f32 {
-        self.fix_zero(self.max_hp_rate)
-    }
-
-    fn physics_attack_rate(&self) -> f32 {
-        self.fix_zero(self.physics_attack_rate)
-    }
-
-    fn magic_attack_rate(&self) -> f32 {
-        self.fix_zero(self.magic_attack_rate)
-    }
-
-    fn fire_attack_rate(&self) -> f32 {
-        self.fix_zero(self.fire_attack_rate)
-    }
-
-    fn thunder_attack_rate(&self) -> f32 {
-        self.fix_zero(self.thunder_attack_rate)
-    }
-
-    fn dark_attack_rate(&self) -> f32 {
-        self.fix_zero(self.dark_attack_rate)
-    }
-
-    fn fix_zero(&self, value: f32) -> f32 {
-        match value {
-            0.0 => 1.0,
-            f => f
-        }
-
+    fn update_with_original_data_for_multiplier(&self, data: &mut SP_EFFECT_PARAM_ST, multiplier: f32) {
+        data.set_max_hp_rate(self.max_hp_rate * multiplier);
+        data.set_physics_attack_rate(self.physics_attack_rate * multiplier);
+        data.set_magic_attack_rate(self.magic_attack_rate * multiplier);
+        data.set_fire_attack_rate(self.fire_attack_rate * multiplier);
+        data.set_thunder_attack_rate(self.thunder_attack_rate * multiplier);
+        data.set_dark_attack_rate(self.dark_attack_rate * multiplier);
     }
 }
 
@@ -109,7 +89,7 @@ impl MoreDifficultER {
             current_difficulty_level: None,
             config: None,
             hooking_error: None,
-            original_data: vec![],
+            original_data: HashMap::new(),
         }
     }
 
@@ -154,11 +134,13 @@ impl MoreDifficultER {
         const BASE_SAVED_DIFFICULTY_FLAG_ID: u32 = 1061460000;
         const MAX_DIFFICULTY_LEVEL: u32 = 5;
 
-        self.handle_more_difficult_er_menu(flag_man, BASE_SAVED_DIFFICULTY_FLAG_ID, MAX_DIFFICULTY_LEVEL);
-        self.handle_more_difficult_er_difficulty(flag_man, BASE_SAVED_DIFFICULTY_FLAG_ID, MAX_DIFFICULTY_LEVEL);
+        let normal_difficulty_level = self.normal_difficulty_level();
+
+        self.handle_more_difficult_er_menu(flag_man, BASE_SAVED_DIFFICULTY_FLAG_ID, MAX_DIFFICULTY_LEVEL, normal_difficulty_level);
+        self.handle_more_difficult_er_difficulty(flag_man, BASE_SAVED_DIFFICULTY_FLAG_ID, MAX_DIFFICULTY_LEVEL, normal_difficulty_level);
     }
 
-    fn handle_more_difficult_er_menu(&self, flag_man: &mut CSEventFlagMan, base_saved_difficulty_flag_id: u32, max_difficulty: u32) {
+    fn handle_more_difficult_er_menu(&self, flag_man: &mut CSEventFlagMan, base_saved_difficulty_flag_id: u32, max_difficulty: u32, normal_difficulty_level: u32) {
         const BASE_DIFFICULTY_FLAG_ID: u32 = 1061472100;
 
         (0..=max_difficulty).for_each(|level| {
@@ -176,11 +158,11 @@ impl MoreDifficultER {
             !flag_man.get_flag(base_saved_difficulty_flag_id + saved_level)
         });
         if nothing_set {
-            flag_man.set_flag(base_saved_difficulty_flag_id, true);
+            flag_man.set_flag(base_saved_difficulty_flag_id + normal_difficulty_level, true);
         }
     }
 
-    fn handle_more_difficult_er_difficulty(&mut self, flag_man: &mut CSEventFlagMan, base_saved_difficulty_flag_id: u32, max_difficulty: u32) {
+    fn handle_more_difficult_er_difficulty(&mut self, flag_man: &mut CSEventFlagMan, base_saved_difficulty_flag_id: u32, max_difficulty: u32, normal_difficulty_level: u32) {
         let Some(repo) = unsafe { SoloParamRepository::instance() }.ok() else {
             tracing::error!("SoloParamRepository instance not found, cannot handle more difficult ER difficulty");
             return;
@@ -189,23 +171,26 @@ impl MoreDifficultER {
             (0..=max_difficulty)
                 .find(|level_flag| flag_man.get_flag(*level_flag + base_saved_difficulty_flag_id))
                 .filter(|level| level != &self.current_difficulty_level.unwrap_or(u32::MAX)){
-            if difficulty_level_flag == 0 {
-                (0..=7)
-                    .for_each(|ng_plus| {
-                        if let Some(ng_plus_data) = repo.get_mut::<ClearCountCorrectParam>(ng_plus) &&
-                            let Some(original_data) = self.original_data.get(ng_plus as usize) {
-                            original_data.update_with_raw_original_data(ng_plus_data);
+            if difficulty_level_flag == normal_difficulty_level {
+                tracing::debug!("Applying normal difficulty level for area SP effects");
+                area_sp_effect_ids()
+                    .for_each(|sp_effect_id| {
+                        if let Some(sp_effect_param) = repo.get_mut::<SpEffectParam>(sp_effect_id) &&
+                            let Some(original_data) = self.original_data.get(&sp_effect_id) {
+                            original_data.update_with_raw_original_data(sp_effect_param);
                         }
                     });
             }
             else {
-                let multiplier = self.more_difficult_er_multiplier().powf(difficulty_level_flag as f32);
-                tracing::debug!("Applying multiplier {} for difficulty level {}", multiplier, difficulty_level_flag);
-                (0..=7)
-                    .for_each(|ng_plus| {
-                        if let Some(ng_plus_data) = repo.get_mut::<ClearCountCorrectParam>(ng_plus) &&
-                            let Some(original_data) = self.original_data.get(ng_plus as usize) {
-                            original_data.update_with_original_data_for_multiplier(ng_plus_data, multiplier);
+                let difficulty_power = difficulty_level_flag as i32 - normal_difficulty_level as i32;
+                let level_multiplier = self.more_difficult_er_multiplier();
+                let multiplier = level_multiplier.powf(difficulty_power as f32);
+                tracing::debug!("Applying multiplier {} for level multiplier {} difficulty level {} and difficulty power {}", multiplier, level_multiplier, difficulty_level_flag, difficulty_power);
+                area_sp_effect_ids()
+                    .for_each(|sp_effect_id| {
+                        if let Some(sp_effect_param) = repo.get_mut::<SpEffectParam>(sp_effect_id) &&
+                            let Some(original_data) = self.original_data.get(&sp_effect_id) {
+                            original_data.update_with_original_data_for_multiplier(sp_effect_param, multiplier);
                         }
                     });
             }
@@ -220,23 +205,36 @@ impl MoreDifficultER {
             Some(config) => config.more_difficult_er_multiplier.unwrap_or(DEFAULT_MULTIPLIER),
         }
     }
+
+    fn normal_difficulty_level(&self) -> u32 {
+        const DEFAULT_NORMAL_DIFFICULTY_LEVEL: u32 = 2;
+        match &self.config {
+            None => DEFAULT_NORMAL_DIFFICULTY_LEVEL,
+            Some(config) => config.normal_difficulty_level.unwrap_or(DEFAULT_NORMAL_DIFFICULTY_LEVEL),
+        }
+    }
 }
 
-fn initialize_more_difficult_er_data() -> Vec<MoreDifficultData> {
+fn area_sp_effect_ids() -> impl Iterator<Item = u32> {
+    let base_area = (7000..=7280).step_by(10);
+    let base_area_npc = 19351..=19370;
+    let dlc_area = (20007000..=20007150).step_by(10);
+    let dlc_area_npc = (20007200..=20007350).step_by(10);
+
+    base_area.chain(base_area_npc).chain(dlc_area).chain(dlc_area_npc)
+}
+
+fn initialize_more_difficult_er_data() -> HashMap<u32, MoreDifficultData> {
     let Some(repo) = unsafe { SoloParamRepository::instance() }.ok() else {
         tracing::error!("SoloParamRepository instance not found, cannot initialize more difficult ER difficulty");
-        return vec![];
+        return HashMap::new();
     };
-    (0..=7)
-        .filter_map(|ng_plus| repo.get::<ClearCountCorrectParam>(ng_plus))
-        .map(|ng_plus_data| MoreDifficultData {
-            max_hp_rate: ng_plus_data.max_hp_rate(),
-            physics_attack_rate: ng_plus_data.physics_attack_rate(),
-            magic_attack_rate: ng_plus_data.magic_attack_rate(),
-            fire_attack_rate: ng_plus_data.fire_attack_rate(),
-            thunder_attack_rate: ng_plus_data.thunder_attack_rate(),
-            dark_attack_rate: ng_plus_data.dark_attack_rate(),
-        })
+    area_sp_effect_ids()
+        .filter_map(|sp_effect_id|
+            repo.get::<SpEffectParam>(sp_effect_id)
+                .map(MoreDifficultData::new)
+                .map(|more_difficult_data| (sp_effect_id, more_difficult_data))
+        )
         .collect()
 }
 
