@@ -6,6 +6,7 @@ use serde::Deserialize;
 pub struct MoreDifficultERConfig {
     pub log_debug_messages: Option<bool>,
     pub more_difficult_er_multiplier: Option<f32>,
+    pub normal_difficulty_level: Option<u32>,
     pub extra_config: ErExtendRsEsdConfig,
 }
 

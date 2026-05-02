@@ -4,8 +4,12 @@
 log_debug_messages = false
 
 # Difficulty multiplier power per level (enemy max hp and character damage taken)
-# The first level ends up much more than this for NG, because of how the multipliers work.
+# The hp and damage taken will increase or decrease by this power per level.
 more_difficult_er_multiplier = 1.1
+
+# The level that will be classed as normal difficulty. No increase or decrease from the regular game. (Range of 0 to 5)
+# If you update this, you should probably also update the text below for each level to show which is "normal".
+normal_difficulty_level = 2
 
 # Extra config for text and menus.
 [extra_config]
@@ -14,19 +18,19 @@ more_difficult_er_multiplier = 1.1
     ## Text ids ending with 1XXX, because they don't need to be in a saved id range, and any 1XXX is invalid for flags.
     event_text_for_talk = [
       { text_id = 1061471099, text = "More Difficult ER" },
-      { text_id = 1061471100, text = "Make more difficult. Currently 0/5 (normal)" },
+      { text_id = 1061471100, text = "Make more difficult. Currently 0/5 (min)" },
       { text_id = 1061471101, text = "Make more difficult. Currently 1/5" },
-      { text_id = 1061471102, text = "Make more difficult. Currently 2/5" },
+      { text_id = 1061471102, text = "Make more difficult. Currently 2/5 (normal)" },
       { text_id = 1061471103, text = "Make more difficult. Currently 3/5" },
       { text_id = 1061471104, text = "Make more difficult. Currently 4/5" },
       { text_id = 1061471111, text = "Make less difficult. Currently 1/5" },
-      { text_id = 1061471112, text = "Make less difficult. Currently 2/5" },
+      { text_id = 1061471112, text = "Make less difficult. Currently 2/5 (normal)" },
       { text_id = 1061471113, text = "Make less difficult. Currently 3/5" },
       { text_id = 1061471114, text = "Make less difficult. Currently 4/5" },
       { text_id = 1061471115, text = "Make less difficult. Currently 5/5 (max)" },
-      { text_id = 1061471120, text = "This will change the diffculty to 0/5 (normal). Are you sure?" },
+      { text_id = 1061471120, text = "This will change the diffculty to 0/5 (min). Are you sure?" },
       { text_id = 1061471121, text = "This will change the diffculty to 1/5. Are you sure?" },
-      { text_id = 1061471122, text = "This will change the diffculty to 2/5. Are you sure?" },
+      { text_id = 1061471122, text = "This will change the diffculty to 2/5 (normal). Are you sure?" },
       { text_id = 1061471123, text = "This will change the diffculty to 3/5. Are you sure?" },
       { text_id = 1061471124, text = "This will change the diffculty to 4/5. Are you sure?" },
       { text_id = 1061471125, text = "This will change the diffculty to 5/5 (max). Are you sure?" },
