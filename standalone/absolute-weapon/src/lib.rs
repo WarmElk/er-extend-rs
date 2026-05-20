@@ -5,19 +5,16 @@ mod patch_weapon_reinforcements;
 use crate::config::AbsoluteWeaponConfig;
 use crate::patch_weapon_reinforcements::patch_weapon_reinforcements;
 use crate::upgrade::PlayerGameDataExtender;
-use eldenring::cs::{CSEventFlagMan, PlayerGameData, PlayerIns, WorldChrMan};
+use eldenring::cs::{CSEventFlagMan, CSTaskGroupIndex, CSTaskImp, PlayerGameData, PlayerIns, WorldChrMan};
 use eldenring::util::system::wait_for_system_init;
 use er_extend_rs_discovery::{discover_probable_main_overhaul_mod, ProbableMainOverhaulMod};
 use er_extend_rs_esd::initialize_er_extend_rs_esd_from_config;
 use er_extend_rs_rva::HookError;
-use fromsoftware_shared::{FromStatic, OwnedPtr, Program};
-use hudhook::hooks::dx12::ImguiDx12Hooks;
-use hudhook::{hudhook, ImguiRenderLoop, RenderContext};
-use imgui::StyleColor::{Text, WindowBg};
-use imgui::{Context, Ui};
+use fromsoftware_shared::{FromStatic, OwnedPtr, Program, SharedTaskImpExt};
 use std::cmp::min;
 use std::ptr::NonNull;
 use std::time::Duration;
+use eldenring::fd4::FD4TaskData;
 use tracing::level_filters::LevelFilter;
 
 trait FlagManExtender {
@@ -51,7 +48,6 @@ struct Initialization {
 
 #[derive(Default)]
 struct Toggles {
-    allow_debug_window_overlay: bool,
     show_debug_window_overlay: bool,
 }
 
@@ -126,8 +122,8 @@ impl AbsoluteWeapon {
     }
 }
 
-impl ImguiRenderLoop for AbsoluteWeapon {
-    fn initialize(&mut self, _ctx: &mut Context, _render_context: &mut dyn RenderContext) {
+impl AbsoluteWeapon {
+    fn init(&mut self) {
         let config = config::get_config();
 
         let logging_level = if config.log_debug_messages.unwrap_or(false) { LevelFilter::DEBUG } else { LevelFilter::WARN };
@@ -139,14 +135,17 @@ impl ImguiRenderLoop for AbsoluteWeapon {
 
         tracing::debug!("Config: {:?}", config);
 
-        self.toggles.allow_debug_window_overlay = config.allow_debug_window_overlay.unwrap_or(false);
         self.initialization.patch_weapon_reinforcements = config.patch_weapon_reinforcements.unwrap_or(true);
         self.initialization.config = Some(config);
 
         self.initialize_esd_config();
     }
 
-    fn before_render(&mut self, _ctx: &mut Context, _render_context: &mut dyn RenderContext) {
+    fn step(&mut self) {
+        if self.initialization.config.is_none() {
+            self.init();
+        }
+
         let player_game_data = match self.find_player_game_data() {
             Some(mut player_game_data) => unsafe { player_game_data.as_mut() },
             None => {
@@ -166,50 +165,35 @@ impl ImguiRenderLoop for AbsoluteWeapon {
                 return;
             };
 
-            if self.toggles.allow_debug_window_overlay {
-                flag_man.compare_and_set_flag(config::ALLOW_UPGRADE_STATS_DISPLAY_FLAG_ID, false, true);
-                if flag_man.compare_and_set_flag(config::TOGGLE_UPGRADE_STATS_DISPLAY_FLAG_ID, true, false) {
-                    self.toggles.show_debug_window_overlay = !self.toggles.show_debug_window_overlay;
-                }
-            }
-            else {
-                flag_man.compare_and_set_flag(config::ALLOW_UPGRADE_STATS_DISPLAY_FLAG_ID, true, false);
-            }
-
             if flag_man.compare_and_set_flag(config::UPGRADE_ALL_WEAPONS_FLAG_ID, true, false) {
                 self.weapon_upgrades.weapons_upgraded_last_time = player_game_data.upgrade_held_weapons_to_equivalent_level(self.weapon_upgrades.highest_regular_weapon_level);
             }
         }
     }
-
-    fn render(&mut self, ui: &mut Ui) {
-        if !self.initialization.world_initialized || !self.toggles.show_debug_window_overlay {
-            return;
-        }
-        ui.window("##absolute_weapon")
-            .no_decoration()
-            .no_inputs()
-            .no_nav()
-            .always_auto_resize(true)
-            .build(|| {
-                ui.set_window_font_scale(2.0);
-                {
-                    let background_color = ui.push_style_color(WindowBg, [0.5, 0.5, 0.5, 0.20]);
-                    let text_color = ui.push_style_color(Text, [0.0, 1.0, 0.0, 0.50]);
-                    ui.text("Absolute Weapon (show/hide at grace)");
-                    ui.separator();
-                    ui.text(format!("Highest regular weapon level        : {:?}", self.weapon_upgrades.highest_regular_weapon_level));
-                    ui.text(format!("Max regular weapon level            : {:?}", self.weapon_upgrades.max_regular_weapon_upgrade_level));
-                    ui.text(format!("Number of weapons upgraded last time: {:?}", self.weapon_upgrades.weapons_upgraded_last_time));
-                    if let Some(error) = &self.initialization.hooking_error {
-                        ui.separator();
-                        ui.text(format!("Hooking error: {:?}", error));
-                    }
-                    text_color.pop();
-                    background_color.pop();
-                }
-            });
-    }
 }
 
-hudhook!(ImguiDx12Hooks, AbsoluteWeapon::new());
+#[unsafe(no_mangle)]
+/// # Safety
+/// This is exposed this way such that libraryloader can call it. Do not call this yourself.
+pub unsafe extern "C" fn DllMain(_hmodule: u64, reason: u32) -> bool {
+    // Exit early if we're not attaching a DLL
+    if reason != 1 {
+        return true;
+    }
+
+    std::thread::spawn(move || {
+        wait_for_system_init(&Program::current(), Duration::MAX).expect("Timeout waiting for system init");
+
+        let mut absolute_weapon = AbsoluteWeapon::new();
+
+        let cs_task = unsafe { CSTaskImp::instance().unwrap() };
+        cs_task.run_recurring(
+            move |_: &FD4TaskData| {
+                absolute_weapon.step();
+            },
+            CSTaskGroupIndex::FrameBegin,
+        );
+    });
+
+    true
+}

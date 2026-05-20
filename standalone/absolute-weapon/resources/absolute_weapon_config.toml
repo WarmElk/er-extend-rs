@@ -3,10 +3,6 @@
 # Set to true to log messages to the mod engine log when attempting to upgrade weapons.
 log_debug_messages = false
 
-# Set to true to allow a debug window overlay indicating what the current known upgrade level is, how many weapons have been upgraded this session, etc.
-# The window will start out hidden, with an extra grace submenu option appearing that allows the window visibility to be toggled.
-allow_debug_window_overlay = false
-
 # Some overhaul mods (currently supports Reborn) may change the upgrade system, so auto-upgrading doesn't work correctly.
 # This will check certain values to make sure that you are running Reborn and patch in-memory values when necessary.
 # Set this to false if things are breaking and you're not using Reborn.
@@ -20,8 +16,7 @@ patch_weapon_reinforcements = true
     event_text_for_talk = [
       { text_id = 1061471000, text = "Absolute Weapon Tools" },
       { text_id = 1061471001, text = "Upgrade all held weapons to max achieved so far" },
-      { text_id = 1061471002, text = "Show/hide upgrade stats" },
-      { text_id = 1061471003, text = "This will update all weapons in your inventory to the max achieved so far. Are you sure?" },
+      { text_id = 1061471002, text = "This will update all weapons in your inventory to the max achieved so far. Are you sure?" },
     ]
 
   # Options and submenus to add to the grace menu
@@ -50,6 +45,5 @@ patch_weapon_reinforcements = true
       #     Any valid flag id - item is only shown when the flag is set. 0XXX, 4XXX, 7XXX, 8XXX, or 9XXX for saved flags.
       #     0 (or absent) - item is shown always
       sub_menu_item_config = [
-        { text_id = 1061471001, select_flag_id = 1061475001, confirmation_text_id = 1061471003 },
-        { text_id = 1061471002, select_flag_id = 1061475002, show_on_event_flag_id = 1061470002 },
+        { text_id = 1061471001, select_flag_id = 1061475001, confirmation_text_id = 1061471002 },
       ]

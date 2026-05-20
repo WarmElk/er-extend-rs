@@ -13,8 +13,6 @@ er-extend-rs-rva.workspace = true
 
 eldenring.workspace = true
 fromsoftware-shared.workspace = true
-hudhook.workspace = true
-imgui.workspace = true
 serde.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
