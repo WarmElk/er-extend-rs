@@ -120,6 +120,10 @@ impl MoreDifficultER {
     }
 
     fn step(&mut self) {
+        if self.config.is_none() {
+            self.init();
+        }
+
         let Some(_) = unsafe { WorldChrMan::instance() }.ok() else {
             return;
         };
@@ -251,8 +255,6 @@ pub unsafe extern "C" fn DllMain(_hmodule: u64, reason: u32) -> bool {
         wait_for_system_init(&Program::current(), Duration::MAX).expect("Timeout waiting for system init");
 
         let mut more_difficult_er = MoreDifficultER::new();
-
-        more_difficult_er.init();
 
         let cs_task = unsafe { CSTaskImp::instance().unwrap() };
         cs_task.run_recurring(
