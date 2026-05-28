@@ -55,7 +55,7 @@ fn find_reinforce_type_id_for_weapon(weapon: &EquipInventoryDataListEntry, repo:
 }
 
 fn upgrade_reinforceable_weapons_to_equivalent_level(reinforceable_weapons: &mut Vec<(&mut EquipInventoryDataListEntry, i16)>, current_highest_regular_level: u8, repo: &SoloParamRepository) -> i32 {
-    let Ok(ga_item_accessor) = (unsafe { CSGaitemImp::instance() }) else {
+    let Ok(ga_item_accessor) = (unsafe { CSGaitemImp::instance_mut() }) else {
         tracing::error!("Failed to get ga_item_accessor instance.");
         return 0;
     };

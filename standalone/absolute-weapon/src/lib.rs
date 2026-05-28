@@ -161,7 +161,7 @@ impl AbsoluteWeapon {
         self.weapon_upgrades.update_highest_regular_weapon_level_achieved(player_game_data);
 
         {
-            let Some(flag_man) = unsafe { CSEventFlagMan::instance() }.ok() else {
+            let Some(flag_man) = unsafe { CSEventFlagMan::instance_mut() }.ok() else {
                 return;
             };
 
