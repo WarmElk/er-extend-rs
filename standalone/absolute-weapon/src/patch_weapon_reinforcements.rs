@@ -12,7 +12,7 @@ pub fn patch_weapon_reinforcements(overhaul: &ProbableMainOverhaulMod) {
 }
 
 fn patch_weapon_reinforcements_for_reborn() {
-    let Some(repo) = unsafe { SoloParamRepository::instance() }.ok() else {
+    let Some(repo) = unsafe { SoloParamRepository::instance_mut() }.ok() else {
         return
     };
 

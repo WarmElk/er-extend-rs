@@ -127,7 +127,7 @@ impl MoreDifficultER {
         let Some(_) = unsafe { WorldChrMan::instance() }.ok() else {
             return;
         };
-        let Some(flag_man) = unsafe { CSEventFlagMan::instance() }.ok() else {
+        let Some(flag_man) = unsafe { CSEventFlagMan::instance_mut() }.ok() else {
             return;
         };
 
@@ -167,7 +167,7 @@ impl MoreDifficultER {
     }
 
     fn handle_more_difficult_er_difficulty(&mut self, flag_man: &mut CSEventFlagMan, base_saved_difficulty_flag_id: u32, max_difficulty: u32, normal_difficulty_level: u32) {
-        let Some(repo) = unsafe { SoloParamRepository::instance() }.ok() else {
+        let Some(repo) = unsafe { SoloParamRepository::instance_mut() }.ok() else {
             tracing::error!("SoloParamRepository instance not found, cannot handle more difficult ER difficulty");
             return;
         };
