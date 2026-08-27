@@ -11,7 +11,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.2.0-alpha"
+version = "0.3.0-alpha"
 edition = "2024"
 repository = "https://github.com/WarmElk/er-extend-rs"
 license = "Apache-2.0 OR MIT"
@@ -25,8 +25,8 @@ er-extend-rs-text = { path = "er-extend-rs-text" }
 
 pelite = "0.10.0"
 retour = { version = "0.4.0-alpha.4", features = ["static-detour"] }
-serde = { version = "1.0.228", features = ["derive"] }
-toml = "1.1.2"
+serde = { version = "1.0.229", features = ["derive"] }
+toml = "1.1.4"
 tracing = "0.1.44"
 tracing-subscriber = "0.3.23"
 windows-sys = { version = "0.61.2", features = ["Win32_System_LibraryLoader"] }
@@ -34,9 +34,9 @@ windows-sys = { version = "0.61.2", features = ["Win32_System_LibraryLoader"] }
 [workspace.dependencies.eldenring]
 git = "https://github.com/vswarte/fromsoftware-rs"
 branch = "main"
-version = "0.13.0"
+version = "0.14.0"
 
 [workspace.dependencies.fromsoftware-shared]
 git = "https://github.com/vswarte/fromsoftware-rs"
 branch = "main"
-version = "0.13.0"
+version = "0.14.0"
