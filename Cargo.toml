@@ -11,7 +11,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.3.0-alpha"
+version = "0.4.0-alpha"
 edition = "2024"
 repository = "https://github.com/WarmElk/er-extend-rs"
 license = "Apache-2.0 OR MIT"
@@ -34,9 +34,7 @@ windows-sys = { version = "0.61.2", features = ["Win32_System_LibraryLoader"] }
 [workspace.dependencies.eldenring]
 git = "https://github.com/vswarte/fromsoftware-rs"
 branch = "main"
-version = "0.14.0"
 
 [workspace.dependencies.fromsoftware-shared]
 git = "https://github.com/vswarte/fromsoftware-rs"
 branch = "main"
-version = "0.14.0"
